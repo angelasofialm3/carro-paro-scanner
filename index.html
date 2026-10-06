@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Medicamento - Simulación Móvil</title>
+    <!-- Librería Paho MQTT para JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+        p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .btn-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        button {
+            padding: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.1s;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        .btn-adrenalina {
+            background-color: #28a745; /* Verde seguro */
+        }
+        .btn-noradrenalina {
+            background-color: #dc3545; /* Rojo alerta LASA */
+        }
+        #status {
+            margin-top: 20px;
+            font-weight: bold;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Registro de Medicamento</h2>
+    <p>Simulación de escaneo desde Celular / Lector QR</p>
+
+    <div class="btn-container">
+        <!-- Simula escanear la ampolla de Adrenalina -->
+        <button class="btn-adrenalina" onclick="enviarEscaneo('ADRENALINA_1MG')">
+            Escanear Adrenalina (1 mg)
+        </button>
+
+        <!-- Simula escanear la ampolla de Noradrenalina (Alerta LASA) -->
+        <button class="btn-noradrenalina" onclick="enviarEscaneo('NORADRENALINA_1MG')">
+            Escanear Noradrenalina (Alerta LASA)
+        </button>
+    </div>
+
+    <div id="status">Conectando al sistema...</div>
+
+    <script>
+        // Configuración de la conexión MQTT por WebSockets
+        const broker = "broker.hivemq.com";
+        const port = 8000; // Puerto WebSocket público de HiveMQ
+        const clientID = "web_scanner_" + parseInt(Math.random() * 100000);
+        
+        const client = new Paho.MQTT.Client(broker, port, clientID);
+
+        client.onConnectionLost = function (responseObject) {
+            if (responseObject.errorCode !== 0) {
+                document.getElementById("status").innerHTML = "Conexión perdida: " + responseObject.errorMessage;
+                document.getElementById("status").style.color = "red";
+            }
+        };
+
+        // Conectar al broker
+        client.connect({
+            onSuccess: function () {
+                document.getElementById("status").innerHTML = "Sistema listo para escanear.";
+                document.getElementById("status").style.color = "green";
+            },
+            onFailure: function (message) {
+                document.getElementById("status").innerHTML = "Error de conexión: " + message.errorMessage;
+                document.getElementById("status").style.color = "red";
+            }
+        });
+
+        // Función que se ejecuta al presionar el botón (simulando la lectura del QR)
+        function enviarEscaneo(medicamento) {
+            if (!client.isConnected()) {
+                alert("No hay conexión con el servidor MQTT.");
+                return;
+            }
+            
+            const topic = "carro_paro/meds_angela";
+            const message = new Paho.MQTT.Message(medicamento);
+            message.destinationName = topic;
+            client.send(message);
+
+            document.getElementById("status").innerHTML = "¡Escaneado con éxito: " + medicamento + "!";
+            setTimeout(() => {
+                document.getElementById("status").innerHTML = "Sistema listo para escanear.";
+            }, 3000);
+        }
+    </script>
+
+</body>
+</html>
