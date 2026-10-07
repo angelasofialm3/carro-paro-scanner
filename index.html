@@ -76,50 +76,48 @@
     <div id="status">Conectando al sistema...</div>
 
     <script>
-        // Configuración de la conexión MQTT por WebSockets
-        const broker = "broker.hivemq.com";
-        const port = 8000; // Puerto WebSocket público de HiveMQ
-        const clientID = "web_scanner_" + parseInt(Math.random() * 100000);
-        
-        const client = new Paho.MQTT.Client(broker, port, clientID);
+    // Configuración para conexión segura (WSS) compatible con GitHub Pages (HTTPS)
+    const broker = "broker.hivemq.com";
+    const port = 8884; // Puerto seguro WSS de HiveMQ
+    const clientID = "web_scanner_" + parseInt(Math.random() * 100000);
+    
+    // Se especifica el broker, puerto y la ruta "/mqtt"
+    const client = new Paho.MQTT.Client(broker, port, "/mqtt", clientID);
 
-        client.onConnectionLost = function (responseObject) {
-            if (responseObject.errorCode !== 0) {
-                document.getElementById("status").innerHTML = "Conexión perdida: " + responseObject.errorMessage;
-                document.getElementById("status").style.color = "red";
-            }
-        };
-
-        // Conectar al broker
-        client.connect({
-            onSuccess: function () {
-                document.getElementById("status").innerHTML = "Sistema listo para escanear.";
-                document.getElementById("status").style.color = "green";
-            },
-            onFailure: function (message) {
-                document.getElementById("status").innerHTML = "Error de conexión: " + message.errorMessage;
-                document.getElementById("status").style.color = "red";
-            }
-        });
-
-        // Función que se ejecuta al presionar el botón (simulando la lectura del QR)
-        function enviarEscaneo(medicamento) {
-            if (!client.isConnected()) {
-                alert("No hay conexión con el servidor MQTT.");
-                return;
-            }
-            
-            const topic = "carro_paro/meds_angela";
-            const message = new Paho.MQTT.Message(medicamento);
-            message.destinationName = topic;
-            client.send(message);
-
-            document.getElementById("status").innerHTML = "¡Escaneado con éxito: " + medicamento + "!";
-            setTimeout(() => {
-                document.getElementById("status").innerHTML = "Sistema listo para escanear.";
-            }, 3000);
+    client.onConnectionLost = function (responseObject) {
+        if (responseObject.errorCode !== 0) {
+            document.getElementById("status").innerHTML = "Conexión perdida: " + responseObject.errorMessage;
+            document.getElementById("status").style.color = "red";
         }
-    </script>
+    };
 
-</body>
-</html>
+    // Conectar al broker habilitando SSL
+    client.connect({
+        useSSL: true, // ¡Obligatorio para páginas con HTTPS!
+        onSuccess: function () {
+            document.getElementById("status").innerHTML = "Sistema listo para escanear.";
+            document.getElementById("status").style.color = "green";
+        },
+        onFailure: function (message) {
+            document.getElementById("status").innerHTML = "Error de conexión: " + message.errorMessage;
+            document.getElementById("status").style.color = "red";
+        }
+    });
+
+    function enviarEscaneo(medicamento) {
+        if (!client.isConnected()) {
+            alert("No hay conexión segura con el servidor MQTT.");
+            return;
+        }
+        
+        const topic = "carro_paro/meds_angela";
+        const message = new Paho.MQTT.Message(medicamento);
+        message.destinationName = topic;
+        client.send(message);
+
+        document.getElementById("status").innerHTML = "¡Escaneado con éxito: " + medicamento + "!";
+        setTimeout(() => {
+            document.getElementById("status").innerHTML = "Sistema listo para escanear.";
+        }, 3000);
+    }
+</script>
