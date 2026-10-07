@@ -3,121 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Medicamento - Simulación Móvil</title>
-    <!-- Librería Paho MQTT para JavaScript -->
+    <title>Escáner Código Azul - Sanitas</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
             text-align: center;
             padding: 20px;
             margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        h2 {
-            color: #333;
-            margin-bottom: 5px;
-        }
-        p {
-            color: #666;
-            margin-bottom: 30px;
+        h2 { color: #004a99; margin-bottom: 5px; }
+        p { color: #666; margin-bottom: 15px; }
+        #reader {
+            width: 100%;
+            max-width: 400px;
+            height: 280px;
+            border: 3px solid #004a99;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            background-color: #000;
         }
         .btn-container {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 10px;
+            width: 100%;
             max-width: 400px;
-            margin: 0 auto;
+            margin-bottom: 15px;
         }
         button {
-            padding: 20px;
-            font-size: 18px;
+            padding: 15px;
+            font-size: 16px;
             font-weight: bold;
-            color: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: transform 0.1s;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
-        button:active {
-            transform: scale(0.98);
-        }
-        .btn-adrenalina {
-            background-color: #28a745; /* Verde seguro */
-        }
-        .btn-noradrenalina {
-            background-color: #dc3545; /* Rojo alerta LASA */
-        }
+        .btn-adr { background-color: #28a745; }
+        .btn-nor { background-color: #dc3545; }
         #status {
-            margin-top: 20px;
             font-weight: bold;
-            color: #007bff;
+            padding: 12px;
+            border-radius: 6px;
+            width: 90%;
+            max-width: 400px;
         }
+        .status-ready { background-color: #d4edda; color: #155724; }
+        .status-success { background-color: #cce5ff; color: #004085; }
+        .status-error { background-color: #f8d7da; color: #721c24; }
     </style>
 </head>
 <body>
 
-    <h2>Registro de Medicamento</h2>
-    <p>Simulación de escaneo desde Celular / Lector QR</p>
+    <h2>Registro Código Azul</h2>
+    <p>Escanee la ampolla o seleccione el fármaco</p>
+
+    <div id="reader"></div>
 
     <div class="btn-container">
-        <!-- Simula escanear la ampolla de Adrenalina -->
-        <button class="btn-adrenalina" onclick="enviarEscaneo('ADRENALINA_1MG')">
-            Escanear Adrenalina (1 mg)
-        </button>
-
-        <!-- Simula escanear la ampolla de Noradrenalina (Alerta LASA) -->
-        <button class="btn-noradrenalina" onclick="enviarEscaneo('NORADRENALINA_1MG')">
-            Escanear Noradrenalina (Alerta LASA)
-        </button>
+        <button class="btn-adr" onclick="enviarAlerta('ADRENALINA')">Escanear Adrenalina</button>
+        <button class="btn-nor" onclick="enviarAlerta('NORADRENALINA')">Escanear Noradrenalina (LASA)</button>
     </div>
 
-    <div id="status">Conectando al sistema...</div>
+    <div id="status" class="status-ready">Conectando al sistema...</div>
 
     <script>
-    // Configuración para conexión segura (WSS) compatible con GitHub Pages (HTTPS)
-    const broker = "broker.hivemq.com";
-    const port = 8884; // Puerto seguro WSS de HiveMQ
-    const clientID = "web_scanner_" + parseInt(Math.random() * 100000);
-    
-    // Se especifica el broker, puerto y la ruta "/mqtt"
-    const client = new Paho.MQTT.Client(broker, port, "/mqtt", clientID);
-
-    client.onConnectionLost = function (responseObject) {
-        if (responseObject.errorCode !== 0) {
-            document.getElementById("status").innerHTML = "Conexión perdida: " + responseObject.errorMessage;
-            document.getElementById("status").style.color = "red";
-        }
-    };
-
-    // Conectar al broker habilitando SSL
-    client.connect({
-        useSSL: true, // ¡Obligatorio para páginas con HTTPS!
-        onSuccess: function () {
-            document.getElementById("status").innerHTML = "Sistema listo para escanear.";
-            document.getElementById("status").style.color = "green";
-        },
-        onFailure: function (message) {
-            document.getElementById("status").innerHTML = "Error de conexión: " + message.errorMessage;
-            document.getElementById("status").style.color = "red";
-        }
-    });
-
-    function enviarEscaneo(medicamento) {
-        if (!client.isConnected()) {
-            alert("No hay conexión segura con el servidor MQTT.");
-            return;
-        }
-        
+        const broker = "test.mosquitto.org";
+        const port = 8081;
+        const clientID = "web_scanner_" + parseInt(Math.random() * 100000);
         const topic = "carro_paro/meds_angela";
-        const message = new Paho.MQTT.Message(medicamento);
-        message.destinationName = topic;
-        client.send(message);
+        
+        const client = new Paho.MQTT.Client(broker, port, "/mqtt", clientID);
 
-        document.getElementById("status").innerHTML = "¡Escaneado con éxito: " + medicamento + "!";
-        setTimeout(() => {
-            document.getElementById("status").innerHTML = "Sistema listo para escanear.";
-        }, 3000);
-    }
-</script>
+        client.onConnectionLost = function (responseObject) {
+            document.getElementById("status").innerHTML = "Conexión perdida. Recargue la página.";
+            document.getElementById("status").className = "status-error";
+        };
+
+        client.connect({
+            useSSL: true,
+            onSuccess: function () {
+                document.getElementById("status").innerHTML = "Cámara lista para escanear.";
+                document.getElementById("status").className = "status-ready";
+                iniciarCamara();
+            },
+            onFailure: function (message) {
+                document.getElementById("status").innerHTML = "Error de conexión MQTT.";
+                document.getElementById("status").className = "status-error";
+            }
+        });
+
+        function enviarAlerta(medicamento) {
+            if (!client.isConnected()) {
+                alert("Sin conexión al servidor.");
+                return;
+            }
+            
+            const message = new Paho.MQTT.Message(medicamento);
+            message.destinationName = topic;
+            client.send(message);
+
+            const statusDiv = document.getElementById("status");
+            statusDiv.innerHTML = "✅ Enviado: " + medicamento;
+            statusDiv.className = "status-success";
+
+            setTimeout(() => {
+                if (client.isConnected()) {
+                    statusDiv.innerHTML = "Cámara lista para escanear.";
+                    statusDiv.className = "status-ready";
+                }
+            }, 2500);
+        }
+
+        function iniciarCamara() {
+            const html5QrCode = new Html5Qrcode("reader");
+            const qrCodeSuccessCallback = (decodedText) => {
+                // Filtra si el texto leída del QR contiene los nombres clave
+                let textoUpper = decodedText.toUpperCase();
+                if (textoUpper.includes("ADRENALINA") || textoUpper.includes("NORADRENALINA")) {
+                    let medDetectado = textoUpper.includes("NORADRENALINA") ? "NORADRENALINA" : "ADRENALINA";
+                    enviarAlerta(medDetectado);
+                }
+            };
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 200 }, qrCodeSuccessCallback).catch(err => {
+                console.error("Error de cámara", err);
+            });
+        }
+    </script>
+</body>
+</html>
