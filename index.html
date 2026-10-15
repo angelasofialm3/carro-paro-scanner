@@ -11,18 +11,18 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f0f2f5;
             text-align: center;
-            padding: 20px;
+            padding: 15px;
             margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
         h2 { color: #004a99; margin-bottom: 5px; }
-        p { color: #666; margin-bottom: 15px; }
+        p { color: #666; margin-bottom: 10px; font-size: 14px; }
         #reader {
             width: 100%;
             max-width: 400px;
-            height: 280px;
+            height: 220px;
             border: 3px solid #004a99;
             border-radius: 12px;
             margin-bottom: 15px;
@@ -32,29 +32,55 @@
         .btn-container {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
             width: 100%;
             max-width: 400px;
             margin-bottom: 15px;
+            max-height: 350px;
+            overflow-y: auto;
+            padding-right: 5px;
         }
         button {
-            padding: 15px;
-            font-size: 16px;
+            padding: 12px;
+            font-size: 15px;
             font-weight: bold;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             color: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            transition: transform 0.1s;
         }
-        .btn-adr { background-color: #28a745; }
-        .btn-nor { background-color: #dc3545; }
+        button:active { transform: scale(0.98); }
+        .btn-std { background-color: #28a745; }
+        .btn-lasa { background-color: #dc3545; }
+        .btn-defib { background-color: #007bff; }
+        
+        .julios-section {
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 380px;
+            margin-bottom: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+        .julios-select {
+            padding: 8px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
         #status {
             font-weight: bold;
-            padding: 12px;
+            padding: 10px;
             border-radius: 6px;
             width: 90%;
             max-width: 400px;
+            font-size: 14px;
         }
         .status-ready { background-color: #d4edda; color: #155724; }
         .status-success { background-color: #cce5ff; color: #004085; }
@@ -64,13 +90,39 @@
 <body>
 
     <h2>Registro Código Azul</h2>
-    <p>Escanee la ampolla o seleccione el fármaco</p>
+    <p>Escanee la ampolla o seleccione la intervención</p>
 
     <div id="reader"></div>
 
+    <!-- Sección de Desfibrilación / Julios -->
+    <div class="julios-section">
+        <label for="selectJulios"><strong>⚡ Descarga:</strong></label>
+        <select id="selectJulios" class="julios-select">
+            <option value=" DESCARGA 120 J">120 J</option>
+            <option value=" DESCARGA 150 J">150 J</option>
+            <option value=" DESCARGA 200 J" selected>200 J</option>
+            <option value=" DESCARGA 300 J">300 J</option>
+            <option value=" DESCARGA 360 J">360 J</option>
+        </select>
+        <button class="btn-defib" onclick="enviarJulios()">Aplicar Descarga</button>
+    </div>
+
     <div class="btn-container">
-        <button class="btn-adr" onclick="enviarAlerta('ADRENALINA')">Escanear Adrenalina</button>
-        <button class="btn-nor" onclick="enviarAlerta('NORADRENALINA')">Escanear Noradrenalina (LASA)</button>
+        <!-- Fármacos Estándar -->
+        <button class="btn-std" onclick="enviarAlerta('ADRENALINA')">Adrenalina (1 mg)</button>
+        <button class="btn-std" onclick="enviarAlerta('ATROPINA')">Atropina (1 mg)</button>
+        <button class="btn-std" onclick="enviarAlerta('AMIODARONA')">Amiodarona (150 mg)</button>
+        <button class="btn-std" onclick="enviarAlerta('SULFATO DE MAGNESIO')">Sulfato de Magnesio (2 g)</button>
+        <button class="btn-std" onclick="enviarAlerta('BICARBONATO DE SODIO')">Bicarbonato de Sodio (10 mL)</button>
+        <button class="btn-std" onclick="enviarAlerta('GLUCONATO DE CALCIO')">Gluconato de Calcio (1 g)</button>
+        <button class="btn-std" onclick="enviarAlerta('LIDOCAINA')">Lidocaína (100 mg)</button>
+
+        <!-- Fármacos LASA / Alto Riesgo -->
+        <button class="btn-lasa" onclick="enviarAlerta('NORADRENALINA')">Noradrenalina (LASA)</button>
+        <button class="btn-lasa" onclick="enviarAlerta('DOPAMINA')">Dopamina (LASA)</button>
+        <button class="btn-lasa" onclick="enviarAlerta('DOBUTAMINA')">Dobutamina (LASA)</button>
+        <button class="btn-lasa" onclick="enviarAlerta('MIDAZOLAM')">Midazolam (LASA)</button>
+        <button class="btn-lasa" onclick="enviarAlerta('SUCCINILCOLINA')">Succinilcolina (LASA)</button>
     </div>
 
     <div id="status" class="status-ready">Conectando al sistema...</div>
@@ -123,17 +175,30 @@
             }, 2500);
         }
 
+        function enviarJulios() {
+            const julios = document.getElementById("selectJulios").value;
+            enviarAlerta("DESCARGA:" + julios);
+        }
+
         function iniciarCamara() {
             const html5QrCode = new Html5Qrcode("reader");
+            const listaMeds = [
+                "ADRENALINA", "NORADRENALINA", "ATROPINA", "AMIODARONA", 
+                "SULFATO DE MAGNESIO", "BICARBONATO DE SODIO", "GLUCONATO DE CALCIO", 
+                "LIDOCAINA", "DOPAMINA", "DOBUTAMINA", "MIDAZOLAM", "SUCCINILCOLINA"
+            ];
+
             const qrCodeSuccessCallback = (decodedText) => {
-                // Filtra si el texto leída del QR contiene los nombres clave
                 let textoUpper = decodedText.toUpperCase();
-                if (textoUpper.includes("ADRENALINA") || textoUpper.includes("NORADRENALINA")) {
-                    let medDetectado = textoUpper.includes("NORADRENALINA") ? "NORADRENALINA" : "ADRENALINA";
-                    enviarAlerta(medDetectado);
+                for (let med of listaMeds) {
+                    if (textoUpper.includes(med)) {
+                        enviarAlerta(med);
+                        break;
+                    }
                 }
             };
-            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 200 }, qrCodeSuccessCallback).catch(err => {
+
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 180 }, qrCodeSuccessCallback).catch(err => {
                 console.error("Error de cámara", err);
             });
         }
