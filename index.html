@@ -22,7 +22,7 @@
         #reader {
             width: 100%;
             max-width: 420px;
-            height: 320px; /* Aumentado para mayor visibilidad */
+            height: 320px; /* Visor más grande */
             border: 3px solid #004a99;
             border-radius: 12px;
             margin-bottom: 15px;
@@ -198,26 +198,21 @@
                 }
             };
 
-            // Configuración optimizada con alta resolución, enfoque continuo y recuadro de lectura más amplio
+            // Configuración segura y compatible con dispositivos móviles
             const config = {
-                fps: 15,
-                qrbox: { width: 250, height: 250 },
-                aspectRatio: 1.0
+                fps: 10,
+                qrbox: { width: 250, height: 250 }
             };
 
-            const constraints = {
-                facingMode: "environment",
-                width: { ideal: 1280 },
-                height: { ideal: 720 },
-                advanced: [{ focusMode: "continuous" }]
-            };
-
-            html5QrCode.start(constraints, config, qrCodeSuccessCallback).catch(err => {
-                console.error("Error de cámara", err);
-                // Plan de respaldo si el dispositivo no soporta 'advanced constraints' de enfoque
-                html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, qrCodeSuccessCallback).catch(error => {
-                    console.error("Error crítico al iniciar cámara", error);
-                });
+            // Se usa la forma estándar para forzar la cámara trasera de alta calidad
+            html5QrCode.start(
+                { facingMode: "environment" }, 
+                config, 
+                qrCodeSuccessCallback
+            ).catch(err => {
+                console.error("Error al iniciar la cámara", err);
+                document.getElementById("status").innerHTML = "Error al abrir la cámara. Verifique permisos.";
+                document.getElementById("status").className = "status-error";
             });
         }
     </script>
