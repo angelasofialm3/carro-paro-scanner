@@ -21,8 +21,8 @@
         p { color: #666; margin-bottom: 10px; font-size: 14px; }
         #reader {
             width: 100%;
-            max-width: 400px;
-            height: 220px;
+            max-width: 420px;
+            height: 320px; /* Aumentado para mayor visibilidad */
             border: 3px solid #004a99;
             border-radius: 12px;
             margin-bottom: 15px;
@@ -34,9 +34,9 @@
             flex-direction: column;
             gap: 8px;
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             margin-bottom: 15px;
-            max-height: 350px;
+            max-height: 300px;
             overflow-y: auto;
             padding-right: 5px;
         }
@@ -61,7 +61,7 @@
             padding: 10px;
             border-radius: 8px;
             width: 100%;
-            max-width: 380px;
+            max-width: 400px;
             margin-bottom: 10px;
             display: flex;
             gap: 10px;
@@ -79,7 +79,7 @@
             padding: 10px;
             border-radius: 6px;
             width: 90%;
-            max-width: 400px;
+            max-width: 420px;
             font-size: 14px;
         }
         .status-ready { background-color: #d4edda; color: #155724; }
@@ -198,8 +198,26 @@
                 }
             };
 
-            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 180 }, qrCodeSuccessCallback).catch(err => {
+            // Configuración optimizada con alta resolución, enfoque continuo y recuadro de lectura más amplio
+            const config = {
+                fps: 15,
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0
+            };
+
+            const constraints = {
+                facingMode: "environment",
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+                advanced: [{ focusMode: "continuous" }]
+            };
+
+            html5QrCode.start(constraints, config, qrCodeSuccessCallback).catch(err => {
                 console.error("Error de cámara", err);
+                // Plan de respaldo si el dispositivo no soporta 'advanced constraints' de enfoque
+                html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, qrCodeSuccessCallback).catch(error => {
+                    console.error("Error crítico al iniciar cámara", error);
+                });
             });
         }
     </script>
